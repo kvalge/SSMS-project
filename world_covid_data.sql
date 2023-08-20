@@ -11,27 +11,22 @@ FROM [covid-deaths]
 ORDER BY 1, 2
 
 
---Total cases vs total deaths in Estonia per date
-SELECT location, date, total_cases, total_deaths, (CONVERT(float, total_deaths)/CONVERT(float, total_cases))*100 AS death_percentage
-FROM [covid-deaths]
-WHERE location = 'Estonia'
-ORDER BY 1, 2
-
-
---Total cases vs population
+--Total cases vs population by country
 SELECT location, population,
-MAX(CONVERT(float, total_cases)) AS cases_in_total, 
-MAX(CONVERT(float, total_cases))/population * 100 AS share_of_cases
+MAX(CONVERT(bigint, total_cases)) AS cases_in_total, 
+MAX(CONVERT(bigint, total_cases))/population * 100 AS share_of_cases
 FROM [covid-deaths]
 GROUP BY location, population
 ORDER BY share_of_cases DESC
 
 
---Cumulative total deaths vs population in Estonia
-SELECT location, date, population, total_cases, (total_deaths/population)*100 AS death_percentage
+--Total hospitalized patients vs population by country
+SELECT location, population,
+MAX(CONVERT(bigint, hosp_patients)) AS hosp_in_total, 
+MAX(CONVERT(bigint, hosp_patients))/population * 100 AS share_of_hosp
 FROM [covid-deaths]
-WHERE location = 'Estonia'
-ORDER BY 1, 2
+GROUP BY location, population
+ORDER BY share_of_hosp DESC
 
 
 --Countries with highest death count compared to population
@@ -45,11 +40,21 @@ ORDER BY 4 DESC
 
 
 --Continents with highest death count compared to population
+SELECT location, SUM(population)/COUNT(population) AS population, 
+MAX(CAST(total_deaths as int)) AS total_deaths, 
+MAX(CAST(total_deaths as int))/population*100 AS share_of_deaths
+FROM [covid-deaths]
+WHERE location IN('Europe', 'North America', 'Oceania', 'Asia', 'Africa')
+GROUP BY location, population
+ORDER BY 4 DESC
+
+
+--Highest death count compared to population by income
 SELECT location, SUM(population)/COUNT(population), 
 MAX(CAST(total_deaths as int)) AS total_deaths, 
 MAX(CAST(total_deaths as int))/population*100 AS share_of_deaths
 FROM [covid-deaths]
-WHERE continent IS NULL
+WHERE location LIKE '%income'
 GROUP BY location, population
 ORDER BY 4 DESC
 
@@ -64,9 +69,23 @@ ORDER BY  date
 --Deaths by date by continent
 SELECT date, location, MAX(CAST(total_deaths as int))
 FROM [covid-deaths]
-WHERE continent IS NULL
+WHERE location IN('Europe', 'North America', 'Oceania', 'Asia', 'Africa')
 GROUP BY date, location
 ORDER BY location, date
+
+
+--Total cases vs total deaths in Estonia per date
+SELECT location, date, total_cases, total_deaths, (CONVERT(float, total_deaths)/CONVERT(float, total_cases))*100 AS death_percentage
+FROM [covid-deaths]
+WHERE location = 'Estonia'
+ORDER BY 2
+
+
+--Cumulative total deaths vs population in Estonia
+SELECT location, date, population, total_cases, total_deaths, (total_deaths/population)*100 AS death_percentage
+FROM [covid-deaths]
+WHERE location = 'Estonia'
+ORDER BY 2
 
 
 --Joining tables
@@ -94,7 +113,9 @@ ON DEA.location = VAC.location AND DEA.date = VAC.date
 WHERE DEA.continent IS NOT NULL
 ORDER BY 2,3
 
+
 --Rolling vaccination percentage
+
 --CTE
 WITH pop_vac(continent, location, date, population, new_vaccinations, rolling_vaccination)
 AS(
@@ -134,6 +155,7 @@ WHERE DEA.continent IS NOT NULL
 
 SELECT *, (rolling_vaccination/population)*100 AS share
 FROM #precent_vaccinated
+
 
 --view creation
 DROP VIEW IF EXISTS vaccination_percent
