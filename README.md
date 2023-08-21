@@ -1,6 +1,10 @@
-# Data analysis with SQL Server Management Studio.
+# Data analysis with SQL Server Management Studio, Excel, and Tableau.
+
+SQL Server Management Studio tasks:  
 
 world_covid_data.sql - coronavirus pandemic data analysis.  
 Data source: Our World in Data https://ourworldindata.org/coronavirus.  
 Period: 01.03.2020 - 16.08.2023.  
-Data is divided into two sets, deaths and vaccinations.
+Data is divided into two sets, deaths and vaccinations.  
+
+data_cleaning.sql - data cleaning exercises.  
